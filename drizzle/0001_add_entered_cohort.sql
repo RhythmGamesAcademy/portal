@@ -1,0 +1,1 @@
+ALTER TABLE "students" ADD COLUMN "entered_cohort" char(3);
