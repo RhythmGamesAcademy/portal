@@ -1,4 +1,5 @@
 import { signOut } from "@/auth";
+import { SubmitButton } from "@/components/submit-button";
 
 export function SignOutButton() {
   return (
@@ -8,12 +9,9 @@ export function SignOutButton() {
         await signOut({ redirectTo: "/" });
       }}
     >
-      <button
-        type="submit"
-        className="text-sm text-muted underline underline-offset-4 transition-colors hover:text-ink"
-      >
+      <SubmitButton pendingLabel="ログアウト中…">
         ログアウト
-      </button>
+      </SubmitButton>
     </form>
   );
 }

@@ -1,33 +1,48 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useId, useRef, useState } from "react";
 
 export function CopyButton({ value }: { value: string }) {
-  const [copied, setCopied] = useState(false);
-
-  useEffect(() => {
-    if (!copied) return;
-    const timer = setTimeout(() => setCopied(false), 2000);
-    return () => clearTimeout(timer);
-  }, [copied]);
+  const [status, setStatus] = useState<"idle" | "pending" | "success" | "error">("idle");
+  const busy = useRef(false);
+  const messageId = useId();
 
   async function copy() {
+    if (busy.current) return;
+    busy.current = true;
+    setStatus("pending");
     try {
       await navigator.clipboard.writeText(value);
-      setCopied(true);
+      setStatus("success");
     } catch {
-      setCopied(false);
+      setStatus("error");
+    } finally {
+      busy.current = false;
     }
   }
 
   return (
-    <button
-      type="button"
-      onClick={copy}
-      className="inline-flex items-center justify-center rounded-md border border-line px-4 py-2 text-sm text-ink transition-colors hover:bg-notice"
-      aria-live="polite"
-    >
-      {copied ? "コピーしました" : "学籍番号をコピー"}
-    </button>
+    <div className="space-y-2">
+      <button
+        type="button"
+        onClick={copy}
+        disabled={status === "pending"}
+        aria-busy={status === "pending"}
+        aria-describedby={messageId}
+        className="button"
+      >
+        {status === "pending" ? "コピー中…" : "学籍番号をコピー"}
+      </button>
+      <p
+        id={messageId}
+        role="status"
+        aria-atomic="true"
+        className={`min-h-6 text-sm ${status === "error" ? "text-danger" : status === "success" ? "text-success" : "text-muted"}`}
+      >
+        {status === "success" && "学籍番号をコピーしました。"}
+        {status === "error" && "コピーできませんでした。もう一度お試しいただくか、上の番号を選択して手動でコピーしてください。"}
+        {status === "pending" && "学籍番号をコピーしています。"}
+      </p>
+    </div>
   );
 }

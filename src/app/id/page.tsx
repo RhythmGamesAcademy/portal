@@ -20,6 +20,13 @@ const STATUS_LABEL: Record<Student["status"], string> = {
   expelled: "除名",
 };
 
+const STATUS_STYLE: Record<Student["status"], string> = {
+  active: "text-success",
+  suspended: "text-warning",
+  withdrawn: "text-muted",
+  expelled: "text-danger",
+};
+
 export default async function StudentIdPage() {
   const session = await auth();
   if (!session?.discordHash) redirect("/");
@@ -29,9 +36,10 @@ export default async function StudentIdPage() {
   // 発行はサインイン時に完了しているため、ここで見つからないのは異常系
   if (!student) {
     return (
-      <div className="space-y-6">
-        <h1 className="font-serif text-2xl tracking-wide">学籍を確認できません</h1>
-        <p className="text-sm leading-loose text-muted">
+      <div className="panel max-w-2xl space-y-6">
+        <p className="text-sm font-medium text-warning">記録の確認が必要です</p>
+        <h1 className="page-heading">学籍を確認できません</h1>
+        <p className="text-muted">
           学籍の記録を読み出せませんでした。一度ログアウトして、
           あらためてログインし直してください。
         </p>
@@ -41,57 +49,46 @@ export default async function StudentIdPage() {
   }
 
   return (
-    <div className="space-y-10">
-      <section className="space-y-5">
-        <h1 className="font-serif text-xl tracking-wide">学籍番号</h1>
-
-        <div className="rounded-lg border border-line bg-surface p-6 sm:p-8">
+    <div className="max-w-2xl space-y-8 sm:space-y-10">
+      <section className="space-y-6" aria-labelledby="student-id-heading">
+        <div className="space-y-3">
+          <h1 id="student-id-heading" className="page-heading">学籍番号</h1>
+          <p className="text-muted">発行済みの番号を確認・コピーできます。</p>
+        </div>
+        <div className="panel space-y-5">
           <p
-            className="font-mono text-[2rem] leading-tight font-medium tracking-[0.18em] break-all tabular-nums sm:text-5xl"
+            className="student-number"
             aria-label={`学籍番号 ${student.studentId.split("").join(" ")}`}
           >
             {student.studentId}
           </p>
-          <div className="mt-6">
-            <CopyButton value={student.studentId} />
-          </div>
+          <CopyButton value={student.studentId} />
         </div>
-
-        <p className="text-sm leading-loose text-muted">
-          講義のレポート提出時などに使う番号です。
-        </p>
       </section>
 
-      <section className="space-y-3">
-        <h2 className="font-serif text-lg tracking-wide">学籍情報</h2>
-        <dl className="divide-y divide-line border-y border-line text-sm">
-          <div className="flex justify-between gap-4 py-3">
+      <section className="panel space-y-4" aria-labelledby="student-info-heading">
+        <h2 id="student-info-heading" className="section-heading">学籍情報</h2>
+        <dl className="divide-y divide-line">
+          <div className="grid gap-1 py-4 sm:grid-cols-[10rem_1fr] sm:gap-4">
             <dt className="text-muted">発行日</dt>
-            <dd className="text-right">{formatDate(student.createdAt)}</dd>
+            <dd>{formatDate(student.createdAt)}</dd>
           </div>
-          <div className="flex justify-between gap-4 py-3">
-            <dt className="text-muted">入学コホート</dt>
-            <dd className="text-right font-mono tracking-wider tabular-nums">
-              {student.enteredCohort}
-            </dd>
-          </div>
-          <div className="flex justify-between gap-4 py-3">
+          <div className="grid items-start gap-2 py-4 sm:grid-cols-[10rem_1fr] sm:gap-4">
             <dt className="text-muted">在籍状況</dt>
-            <dd
-              className={`text-right ${student.status === "active" ? "" : "text-danger"}`}
-            >
-              {STATUS_LABEL[student.status]}
+            <dd>
+              <span className={`status-badge ${STATUS_STYLE[student.status]}`}>
+                {STATUS_LABEL[student.status]}
+              </span>
             </dd>
           </div>
         </dl>
       </section>
 
-      <section className="rounded-lg bg-notice p-5">
-        <h2 className="font-serif text-base tracking-wide">取り扱いについて</h2>
-        <p className="mt-2 text-sm leading-loose text-muted">
-          学籍番号は秘密情報ではありません。成績台帳の見出しとして用いる番号であり、
-          他の学生や講師に知られても差し支えありません。
-          パスワードの代わりとして用いることはできません。
+      <section className="panel bg-notice" aria-labelledby="handling-heading">
+        <h2 id="handling-heading" className="section-heading">取り扱いについて</h2>
+        <p className="mt-3 text-muted">
+          学籍番号は秘密情報ではありません。他の人に知られても差し支えありません。
+          本人確認や認証に使う値ではなく、パスワードの代わりにはなりません。
         </p>
       </section>
 

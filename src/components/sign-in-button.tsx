@@ -1,4 +1,5 @@
 import { signIn } from "@/auth";
+import { SubmitButton } from "@/components/submit-button";
 
 export function SignInButton({ className = "" }: { className?: string }) {
   return (
@@ -8,12 +9,9 @@ export function SignInButton({ className = "" }: { className?: string }) {
         await signIn("discord", { redirectTo: "/id" });
       }}
     >
-      <button
-        type="submit"
-        className={`inline-flex w-full items-center justify-center rounded-md bg-accent px-5 py-3 text-base font-medium text-accent-ink transition-opacity hover:opacity-90 sm:w-auto ${className}`}
-      >
+      <SubmitButton primary pendingLabel="ログイン画面へ移動中…" className={className}>
         Discord でログイン
-      </button>
+      </SubmitButton>
     </form>
   );
 }

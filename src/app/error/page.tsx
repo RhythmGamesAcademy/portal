@@ -8,7 +8,7 @@ const MESSAGES: Record<string, string> = {
   AccessDenied:
     "ログインを完了できませんでした。学園の Discord サーバーに参加しているか確認のうえ、時間をおいて再度お試しください。",
   Configuration:
-    "学務ポータルの設定に不備があります。時間をおいて再度お試しください。",
+    "学園ポータルの設定に不備があります。時間をおいて再度お試しください。",
   Verification: "ログインの有効期限が切れています。もう一度お試しください。",
 };
 
@@ -23,14 +23,15 @@ export default async function AuthErrorPage({
   const { error } = await searchParams;
 
   return (
-    <div className="space-y-6">
-      <h1 className="font-serif text-2xl tracking-wide">ログインできませんでした</h1>
-      <p className="text-base leading-loose text-muted">
-        {(error && MESSAGES[error]) || FALLBACK}
+    <div className="panel max-w-2xl space-y-6">
+      <p className="text-sm font-medium text-danger">ログインが完了していません</p>
+      <h1 className="page-heading">ログインできませんでした</h1>
+      <p className="text-muted">
+        {(error && Object.hasOwn(MESSAGES, error) && MESSAGES[error]) || FALLBACK}
       </p>
       <Link
         href="/"
-        className="inline-block text-sm text-muted underline underline-offset-4 transition-colors hover:text-ink"
+        className="button button-primary w-full sm:w-auto"
       >
         入口に戻る
       </Link>

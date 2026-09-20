@@ -1,13 +1,22 @@
 import type { Metadata, Viewport } from "next";
 import Link from "next/link";
+import Image from "next/image";
+import { Noto_Sans_JP } from "next/font/google";
 import "./globals.css";
+
+const notoSansJP = Noto_Sans_JP({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+  display: "swap",
+  variable: "--font-noto-sans-jp",
+});
 
 export const metadata: Metadata = {
   title: {
-    default: "学務ポータル | 音楽ゲーム学園",
-    template: "%s | 音楽ゲーム学園 学務ポータル",
+    default: "学園ポータル | 音楽ゲーム学園",
+    template: "%s | 音楽ゲーム学園 学園ポータル",
   },
-  description: "音楽ゲーム学園の学務ポータル。学籍番号の発行と確認を行います。",
+  description: "音楽ゲーム学園の学園ポータル。Discord でログインして、学籍番号の発行と確認を行います。",
   robots: { index: false, follow: false },
 };
 
@@ -18,24 +27,35 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="ja">
+    <html lang="ja" className={notoSansJP.variable}>
       <body className="flex min-h-dvh flex-col">
-        <header className="border-b border-line">
-          <div className="mx-auto w-full max-w-2xl px-5 py-4">
+        <a href="#main-content" className="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-4 focus:z-50 focus:rounded-lg focus:bg-accent focus:px-4 focus:py-3 focus:text-accent-ink">
+          本文へ移動
+        </a>
+        <header className="border-b border-line bg-surface">
+          <div className="portal-container flex min-h-16 items-center py-2">
             <Link
               href="/"
-              className="font-serif text-sm tracking-wide text-muted transition-colors hover:text-ink"
+              className="flex min-h-12 items-center gap-3 rounded-lg transition-colors hover:text-accent"
             >
-              音楽ゲーム学園　学務ポータル
+              <Image src="/icon/rga-logo_b.svg" alt="" width={52} height={32} className="h-9 w-12 shrink-0 object-contain invert" priority />
+              <span className="flex flex-col">
+                <span className="text-base font-semibold">音楽ゲーム学園</span>
+                <span className="text-sm text-muted">学園ポータル</span>
+              </span>
             </Link>
           </div>
         </header>
 
-        <main className="mx-auto w-full max-w-2xl flex-1 px-5 py-10 sm:py-14">{children}</main>
+        <main id="main-content" tabIndex={-1} className="portal-container flex-1 py-8 sm:py-10">{children}</main>
 
         <footer className="border-t border-line">
-          <div className="mx-auto w-full max-w-2xl px-5 py-6 text-xs leading-relaxed text-muted">
-            音楽ゲーム学園 教務課
+          <div className="portal-container flex flex-col gap-2 py-5 text-sm sm:flex-row sm:items-center sm:justify-between">
+            <p className="text-muted">音楽ゲーム学園</p>
+            <nav aria-label="関連サイト" className="flex flex-wrap gap-x-5">
+              <a href="https://rhythmgamesacademy.github.io/website/ja" className="text-link">公式サイト</a>
+              <a href="https://rga-forms-portal.vercel.app" className="text-link">申請書作成ポータル</a>
+            </nav>
           </div>
         </footer>
       </body>
