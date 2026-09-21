@@ -2,7 +2,21 @@
 
 import { useId, useRef, useState } from "react";
 
-export function CopyButton({ value }: { value: string }) {
+export function CopyButton({
+  value,
+  label,
+  pendingLabel,
+  successMessage,
+  errorMessage,
+  workingMessage,
+}: {
+  value: string;
+  label: string;
+  pendingLabel: string;
+  successMessage: string;
+  errorMessage: string;
+  workingMessage: string;
+}) {
   const [status, setStatus] = useState<"idle" | "pending" | "success" | "error">("idle");
   const busy = useRef(false);
   const messageId = useId();
@@ -31,7 +45,7 @@ export function CopyButton({ value }: { value: string }) {
         aria-describedby={messageId}
         className="button"
       >
-        {status === "pending" ? "コピー中…" : "学籍番号をコピー"}
+        {status === "pending" ? pendingLabel : label}
       </button>
       <p
         id={messageId}
@@ -39,9 +53,9 @@ export function CopyButton({ value }: { value: string }) {
         aria-atomic="true"
         className={`min-h-6 text-sm ${status === "error" ? "text-danger" : status === "success" ? "text-success" : "text-muted"}`}
       >
-        {status === "success" && "学籍番号をコピーしました。"}
-        {status === "error" && "コピーできませんでした。もう一度お試しいただくか、上の番号を選択して手動でコピーしてください。"}
-        {status === "pending" && "学籍番号をコピーしています。"}
+        {status === "success" && successMessage}
+        {status === "error" && errorMessage}
+        {status === "pending" && workingMessage}
       </p>
     </div>
   );

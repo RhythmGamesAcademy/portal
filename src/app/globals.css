@@ -91,6 +91,33 @@ body {
     overflow-wrap: anywhere;
   }
 
+  .notice-panel {
+    border: 1px solid var(--line);
+    border-left: 4px solid var(--accent);
+    border-radius: 8px;
+    background: var(--notice);
+    padding: 16px;
+    overflow-wrap: anywhere;
+  }
+
+  .warning-panel {
+    border-left-color: var(--warning);
+  }
+
+  .role-chip {
+    display: inline-flex;
+    min-height: 36px;
+    align-items: center;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    background: var(--notice);
+    padding: 4px 12px;
+    color: var(--ink);
+    font-size: 14px;
+    line-height: 1.5;
+    overflow-wrap: anywhere;
+  }
+
   .button {
     display: inline-flex;
     min-height: 44px;
@@ -149,6 +176,13 @@ body {
 
   .text-link:hover { color: var(--accent-hover); }
 
+  .text-link:focus-visible,
+  .button:focus-visible,
+  a:focus-visible,
+  button:focus-visible {
+    text-decoration-thickness: 2px;
+  }
+
   .student-number-panel {
     container-type: inline-size;
   }
@@ -188,4 +222,10 @@ body {
     transition: none !important;
     scroll-behavior: auto !important;
   }
+}
+
+@media (forced-colors: active) {
+  :focus-visible { outline: 3px solid CanvasText; }
+  .panel, .notice-panel, .role-chip, .button, .status-badge { border-color: ButtonText; }
+  .button-primary { background: ButtonText; color: ButtonFace; }
 }

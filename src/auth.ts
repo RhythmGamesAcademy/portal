@@ -1,6 +1,7 @@
 import NextAuth from "next-auth";
 import Discord from "next-auth/providers/discord";
-import { isAcademyMember } from "@/lib/discord";
+import { DiscordApiError, getAcademyMember, getAcademyRoleIds, isAcademyMember } from "@/lib/discord";
+import { unavailableRoleSnapshot, rolesFromDiscordIds, type PortalRoleSnapshot } from "@/lib/roles";
 import { ensureStudent } from "@/services/students";
 
 declare module "next-auth" {
@@ -8,6 +9,7 @@ declare module "next-auth" {
     /** HMAC-SHA256 ダイジェスト。生の Discord ID はセッションに載せない */
     discordHash: string;
     studentId: string;
+    roles: PortalRoleSnapshot;
   }
 }
 
@@ -15,6 +17,10 @@ declare module "@auth/core/jwt" {
   interface JWT {
     discordHash?: string;
     studentId?: string;
+    academyRoles?: string[];
+    majors?: string[];
+    majorCount?: number;
+    rolesAvailable?: boolean;
   }
 }
 
@@ -22,7 +28,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   providers: [
     Discord({
       // メールアドレスは要求しない
-      authorization: { params: { scope: "identify guilds" } },
+      authorization: { params: { scope: "identify guilds guilds.members.read" } },
     }),
   ],
   session: { strategy: "jwt" },
@@ -40,6 +46,13 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       if (account?.provider !== "discord" || !account.access_token) return false;
 
       if (!(await isAcademyMember(account.access_token))) return "/join";
+
+      // Guild Member APIの失敗は表示用ロールの失敗として扱う。404だけは参加状態と矛盾するため入口へ戻す。
+      try {
+        if (!(await getAcademyMember(account.access_token))) return "/join";
+      } catch (error) {
+        if (error instanceof DiscordApiError && error.kind === "not_found") return "/join";
+      }
 
       const discordId = account.providerAccountId ?? (profile?.id as string | undefined);
       if (!discordId) return false;
@@ -65,9 +78,28 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         token.discordHash = student.discordHash;
         token.studentId = student.studentId;
         token.sub = student.discordHash;
+        try {
+          const roleSnapshot = account.access_token
+            ? rolesFromDiscordIds(await getAcademyRoleIds(account.access_token))
+            : unavailableRoleSnapshot();
+          token.academyRoles = roleSnapshot.academyRoles;
+          token.majors = roleSnapshot.majors;
+          token.majorCount = roleSnapshot.majorCount;
+          token.rolesAvailable = roleSnapshot.rolesAvailable;
+        } catch {
+          const roleSnapshot = unavailableRoleSnapshot();
+          token.academyRoles = roleSnapshot.academyRoles;
+          token.majors = roleSnapshot.majors;
+          token.majorCount = roleSnapshot.majorCount;
+          token.rolesAvailable = roleSnapshot.rolesAvailable;
+        }
         delete token.name;
         delete token.email;
         delete token.picture;
+        const tokenRecord = token as Record<string, unknown>;
+        delete tokenRecord.access_token;
+        delete tokenRecord.refresh_token;
+        delete tokenRecord.id_token;
       }
       return token;
     },
@@ -75,6 +107,12 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     async session({ session, token }) {
       session.discordHash = token.discordHash ?? "";
       session.studentId = token.studentId ?? "";
+      session.roles = {
+        academyRoles: token.academyRoles ?? [],
+        majors: token.majors ?? [],
+        majorCount: token.majorCount ?? 0,
+        rolesAvailable: token.rolesAvailable ?? false,
+      };
       return session;
     },
   },

@@ -1,16 +1,26 @@
 import { signIn } from "@/auth";
 import { SubmitButton } from "@/components/submit-button";
 
-export function SignInButton({ className = "" }: { className?: string }) {
+export function SignInButton({
+  redirectTo,
+  label,
+  pendingLabel,
+  className = "",
+}: {
+  redirectTo: string;
+  label: string;
+  pendingLabel: string;
+  className?: string;
+}) {
   return (
     <form
       action={async () => {
         "use server";
-        await signIn("discord", { redirectTo: "/id" });
+        await signIn("discord", { redirectTo });
       }}
     >
-      <SubmitButton primary pendingLabel="ログイン画面へ移動中…" className={className}>
-        Discord でログイン
+      <SubmitButton primary pendingLabel={pendingLabel} className={className}>
+        {label}
       </SubmitButton>
     </form>
   );

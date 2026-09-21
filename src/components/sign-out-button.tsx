@@ -1,16 +1,16 @@
 import { signOut } from "@/auth";
 import { SubmitButton } from "@/components/submit-button";
 
-export function SignOutButton() {
+export function SignOutButton({ redirectTo, label, pendingLabel }: { redirectTo: string; label: string; pendingLabel: string }) {
   return (
     <form
       action={async () => {
         "use server";
-        await signOut({ redirectTo: "/" });
+        await signOut({ redirectTo });
       }}
     >
-      <SubmitButton pendingLabel="ログアウト中…">
-        ログアウト
+      <SubmitButton pendingLabel={pendingLabel}>
+        {label}
       </SubmitButton>
     </form>
   );

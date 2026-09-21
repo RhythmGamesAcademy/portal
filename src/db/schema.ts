@@ -1,4 +1,5 @@
-import { char, date, pgEnum, pgTable, text, timestamp, varchar } from "drizzle-orm/pg-core";
+import { check, char, date, pgEnum, pgTable, primaryKey, smallint, text, timestamp, uniqueIndex, varchar } from "drizzle-orm/pg-core";
+import { sql } from "drizzle-orm";
 import { COHORT_CODE_LENGTH } from "@/lib/cohort";
 
 /**
@@ -75,5 +76,70 @@ export const students = pgTable("students", {
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
+export const courseStatus = pgEnum("course_status", ["planned", "active", "closed"]);
+export const enrollmentStatus = pgEnum("enrollment_status", ["enrolled", "withdrawn", "completed"]);
+export const gradeStatus = pgEnum("grade_status", ["draft", "published"]);
+export const gradeAuditAction = pgEnum("grade_audit_action", ["created", "updated", "published", "unpublished"]);
+
+/** 成績機能の準備用。講義名は主キーから分離し、学期ごとに別レコードを持つ。 */
+export const courses = pgTable("courses", {
+  id: text("id").primaryKey(),
+  termCode: varchar("term_code", { length: 8 }).notNull().references(() => terms.termCode),
+  title: text("title").notNull(),
+  status: courseStatus("status").notNull().default("planned"),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+export const courseInstructors = pgTable("course_instructors", {
+  courseId: text("course_id").notNull().references(() => courses.id),
+  studentId: varchar("student_id", { length: 16 }).notNull().references(() => students.studentId),
+  assignedAt: timestamp("assigned_at", { withTimezone: true }).notNull().defaultNow(),
+}, (table) => [primaryKey({ columns: [table.courseId, table.studentId] })]);
+
+export const enrollments = pgTable("enrollments", {
+  id: text("id").primaryKey(),
+  courseId: text("course_id").notNull().references(() => courses.id),
+  studentId: varchar("student_id", { length: 16 }).notNull().references(() => students.studentId),
+  status: enrollmentStatus("status").notNull().default("enrolled"),
+  enrolledAt: timestamp("enrolled_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+}, (table) => [uniqueIndex("enrollments_course_student_unique").on(table.courseId, table.studentId)]);
+
+/**
+ * 成績は100点満点の整数だけを保存する。制度上、小数を受け付ける将来の入力処理では
+ * 保存前に Math.ceil 相当で切り上げ、計算前の小数値はDBへ保存しない。
+ */
+export const grades = pgTable("grades", {
+  enrollmentId: text("enrollment_id").primaryKey().references(() => enrollments.id),
+  score: smallint("score").notNull(),
+  status: gradeStatus("status").notNull().default("draft"),
+  publishedAt: timestamp("published_at", { withTimezone: true }),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedByStudentId: varchar("updated_by_student_id", { length: 16 }).notNull().references(() => students.studentId),
+}, (table) => [
+  check("grades_score_range", sql`${table.score} >= 0 AND ${table.score} <= 100`),
+  check("grades_published_at_required", sql`${table.status} <> 'published' OR ${table.publishedAt} IS NOT NULL`),
+]);
+
+export const gradeAuditLogs = pgTable("grade_audit_logs", {
+  id: text("id").primaryKey(),
+  enrollmentId: text("enrollment_id").notNull().references(() => enrollments.id),
+  action: gradeAuditAction("action").notNull(),
+  previousScore: smallint("previous_score"),
+  newScore: smallint("new_score"),
+  changedByStudentId: varchar("changed_by_student_id", { length: 16 }).notNull().references(() => students.studentId),
+  changedAt: timestamp("changed_at", { withTimezone: true }).notNull().defaultNow(),
+}, (table) => [
+  check("grade_audit_previous_score_range", sql`${table.previousScore} IS NULL OR (${table.previousScore} >= 0 AND ${table.previousScore} <= 100)`),
+  check("grade_audit_new_score_range", sql`${table.newScore} IS NULL OR (${table.newScore} >= 0 AND ${table.newScore} <= 100)`),
+]);
+
 export type Term = typeof terms.$inferSelect;
 export type Student = typeof students.$inferSelect;
+export type Course = typeof courses.$inferSelect;
+export type CourseInstructor = typeof courseInstructors.$inferSelect;
+export type Enrollment = typeof enrollments.$inferSelect;
+export type Grade = typeof grades.$inferSelect;
+export type GradeAuditLog = typeof gradeAuditLogs.$inferSelect;
