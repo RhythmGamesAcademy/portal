@@ -36,9 +36,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <div className="portal-container flex min-h-16 items-center py-2">
             <Link
               href="/"
-              className="flex min-h-12 items-center gap-3 rounded-lg transition-colors hover:text-accent"
+              className="flex min-h-12 min-w-0 flex-wrap items-center gap-3 rounded-lg transition-colors hover:text-accent"
             >
-              <Image src="/icon/rga-logo_b.svg" alt="" width={52} height={32} className="h-9 w-12 shrink-0 object-contain invert" priority />
+              <Image src="/icon/rga-logo_w.svg" alt="" width={868} height={382} className="h-auto w-24 shrink-0 object-contain" priority />
               <span className="flex flex-col">
                 <span className="text-base font-semibold">音楽ゲーム学園</span>
                 <span className="text-sm text-muted">学園ポータル</span>
@@ -53,7 +53,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <div className="portal-container flex flex-col gap-2 py-5 text-sm sm:flex-row sm:items-center sm:justify-between">
             <p className="text-muted">音楽ゲーム学園</p>
             <nav aria-label="関連サイト" className="flex flex-wrap gap-x-5">
-              <a href="https://rhythmgamesacademy.github.io/website/ja" className="text-link">公式サイト</a>
               <a href="https://rga-forms-portal.vercel.app" className="text-link">申請書作成ポータル</a>
             </nav>
           </div>

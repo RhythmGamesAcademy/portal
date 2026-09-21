@@ -36,8 +36,7 @@ export default function JoinPage() {
           </a>
         ) : (
           <div className="rounded-lg border border-line bg-notice p-4">
-            <p className="text-muted">招待リンクは、学園の公式サイトの案内をご確認ください。</p>
-            <a href="https://rhythmgamesacademy.github.io/website/ja" className="text-link mt-2">公式サイトを確認する</a>
+            <p className="text-muted">招待リンクが設定されていません。</p>
           </div>
         )}
       </section>

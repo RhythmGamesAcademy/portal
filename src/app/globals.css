@@ -49,7 +49,6 @@ body {
   font-size: 16px;
   line-height: 1.75;
   -webkit-font-smoothing: antialiased;
-  overflow-x: hidden;
 }
 
 :focus-visible {
@@ -150,15 +149,19 @@ body {
 
   .text-link:hover { color: var(--accent-hover); }
 
+  .student-number-panel {
+    container-type: inline-size;
+  }
+
   .student-number {
     font-family: var(--font-mono);
-    font-size: clamp(28px, 6vw, 44px);
+    font-size: clamp(14px, 13cqw, 44px);
     font-weight: 500;
     line-height: 1.4;
     letter-spacing: 0.06em;
     font-variant-numeric: tabular-nums;
     white-space: nowrap;
-    color: var(--accent);
+    color: var(--ink);
     user-select: all;
   }
 
