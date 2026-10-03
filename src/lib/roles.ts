@@ -122,7 +122,22 @@ export function rolesFromDiscordIds(roleIds: string[]): PortalRoleSnapshot {
     if (role.kind === "academy" && !academyRoles.includes(role.code)) academyRoles.push(role.code);
     if (role.kind === "major" && !majorCodes.includes(role.code)) majorCodes.push(role.code);
   }
-  return { academyRoles, majors: majorCodes.slice(0, 5), majorCount: majorCodes.length, rolesAvailable: true };
+  return { academyRoles, majors: majorCodes, majorCount: majorCodes.length, rolesAvailable: true };
+}
+
+export function majorRoleIdsFromCodes(codes: string[]): string[] {
+  const roleIdsByCode = new Map(
+    Object.entries(ROLE_CATALOG)
+      .filter(([, role]) => role.kind === "major")
+      .map(([roleId, role]) => [role.code, roleId]),
+  );
+  return codes.map((code) => roleIdsByCode.get(code)).filter((roleId): roleId is string => Boolean(roleId));
+}
+
+export function majorRoleCodes(): string[] {
+  return Object.values(ROLE_CATALOG)
+    .filter((role) => role.kind === "major")
+    .map((role) => role.code);
 }
 
 export function unavailableRoleSnapshot(): PortalRoleSnapshot {
@@ -137,6 +152,6 @@ export function roleLabel(code: string, locale: "ja" | "en"): string | null {
 export function displayableRoleLabels(snapshot: PortalRoleSnapshot, locale: "ja" | "en") {
   return {
     academy: snapshot.academyRoles.map((code) => roleLabel(code, locale)).filter((label): label is string => Boolean(label)),
-    majors: snapshot.majors.map((code) => roleLabel(code, locale)).filter((label): label is string => Boolean(label)),
+    majors: snapshot.majors.slice(0, 5).map((code) => roleLabel(code, locale)).filter((label): label is string => Boolean(label)),
   };
 }

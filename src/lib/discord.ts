@@ -1,9 +1,18 @@
+import { requireEnv } from "@/lib/env";
+import { ROLE_CATALOG } from "@/lib/roles";
+
 /** 音楽ゲーム学園 Discord サーバー。秘密情報ではないため定数として持つ */
 export const ACADEMY_GUILD_ID = "1518532514489307218";
 
 const API_BASE = "https://discord.com/api/v10";
 const GUILDS_ENDPOINT = `${API_BASE}/users/@me/guilds?limit=200`;
 const MEMBER_ENDPOINT = `${API_BASE}/users/@me/guilds/${ACADEMY_GUILD_ID}/member`;
+const BOT_MEMBERS_ENDPOINT = `${API_BASE}/guilds/${ACADEMY_GUILD_ID}/members`;
+const MAJOR_ROLE_IDS = new Set(
+  Object.entries(ROLE_CATALOG)
+    .filter(([, role]) => role.kind === "major")
+    .map(([roleId]) => roleId),
+);
 
 export type DiscordApiErrorKind =
   | "unauthorized"
@@ -87,4 +96,56 @@ export async function getAcademyMember(accessToken: string): Promise<DiscordGuil
 export async function getAcademyRoleIds(accessToken: string): Promise<string[]> {
   const member = await getAcademyMember(accessToken);
   return member?.roles ?? [];
+}
+
+async function getAcademyMemberRolesWithBot(discordUserId: string, botToken: string): Promise<string[]> {
+  if (!/^\d{17,20}$/.test(discordUserId)) {
+    throw new Error("DiscordユーザーIDが不正です。");
+  }
+  const endpoint = `${BOT_MEMBERS_ENDPOINT}/${encodeURIComponent(discordUserId)}`;
+  const response = await fetch(endpoint, {
+    headers: { Authorization: `Bot ${botToken}` },
+    cache: "no-store",
+  });
+  if (!response.ok) throw new DiscordApiError(errorKind(response.status), response.status);
+
+  try {
+    const body = (await response.json()) as { roles?: unknown };
+    if (!Array.isArray(body.roles) || !body.roles.every((role): role is string => typeof role === "string")) {
+      throw new DiscordApiError("invalid_response", response.status);
+    }
+    return body.roles;
+  } catch (error) {
+    if (error instanceof DiscordApiError) throw error;
+    throw new DiscordApiError("invalid_response", response.status);
+  }
+}
+
+export async function getAcademyRoleIdsWithBot(discordUserId: string): Promise<string[]> {
+  return getAcademyMemberRolesWithBot(discordUserId, requireEnv("DISCORD_BOT_TOKEN"));
+}
+
+/** Bot権限で本人の専攻ロールだけを置き換え、他のロールは維持する。 */
+export async function updateAcademyMajorRoles(discordUserId: string, majorRoleIds: string[]): Promise<void> {
+  const botToken = requireEnv("DISCORD_BOT_TOKEN");
+  const endpoint = `${BOT_MEMBERS_ENDPOINT}/${encodeURIComponent(discordUserId)}`;
+  const headers = {
+    Authorization: `Bot ${botToken}`,
+    "Content-Type": "application/json",
+  };
+
+  const currentRoles = await getAcademyMemberRolesWithBot(discordUserId, botToken);
+  if (!majorRoleIds.every((roleId) => MAJOR_ROLE_IDS.has(roleId))) {
+    throw new Error("変更対象に専攻ロール以外が含まれています。");
+  }
+  const roles = currentRoles.filter((roleId) => !MAJOR_ROLE_IDS.has(roleId));
+  roles.push(...majorRoleIds);
+
+  const updateResponse = await fetch(endpoint, {
+    method: "PATCH",
+    headers,
+    body: JSON.stringify({ roles }),
+    cache: "no-store",
+  });
+  if (!updateResponse.ok) throw new DiscordApiError(errorKind(updateResponse.status), updateResponse.status);
 }
