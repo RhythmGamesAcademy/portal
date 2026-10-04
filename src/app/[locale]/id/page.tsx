@@ -5,7 +5,7 @@ import { StudentIdView } from "@/components/student-id-view";
 import { SignOutButton } from "@/components/sign-out-button";
 import { getDictionary } from "@/i18n";
 import { isLocale, localizedPath, type Locale } from "@/i18n/config";
-import { getAcademyRoleIdsWithBot } from "@/lib/discord";
+import { DiscordApiError, getAcademyRoleIdsWithBot } from "@/lib/discord";
 import { optionalEnv } from "@/lib/env";
 import { rolesFromDiscordIds, unavailableRoleSnapshot } from "@/lib/roles";
 import { findStudentByHash } from "@/services/students";
@@ -27,10 +27,17 @@ export default async function StudentIdPage({ params }: { params: Promise<{ loca
   const session = await auth();
   if (!session?.discordHash) redirect(localizedPath(locale));
   const student = await findStudentByHash(session.discordHash);
-  const sessionRoles = session.roles ?? unavailableRoleSnapshot();
-  const roles = session.discordUserId && optionalEnv("DISCORD_BOT_TOKEN")
-    ? rolesFromDiscordIds(await getAcademyRoleIdsWithBot(session.discordUserId))
-    : sessionRoles;
+  let roles = session.roles ?? unavailableRoleSnapshot();
+  const canEditRoles = Boolean(session.discordUserId && optionalEnv("DISCORD_BOT_TOKEN"));
+  if (canEditRoles) {
+    try {
+      roles = rolesFromDiscordIds(await getAcademyRoleIdsWithBot(session.discordUserId));
+    } catch (error) {
+      if (!(error instanceof DiscordApiError)) throw error;
+      console.error("Failed to load Discord roles for the student ID page.", error);
+      roles = unavailableRoleSnapshot();
+    }
+  }
 
   return (
     <StudentIdView
@@ -38,7 +45,7 @@ export default async function StudentIdPage({ params }: { params: Promise<{ loca
       locale={locale}
       dictionary={dictionary}
       roles={roles}
-      canEditRoles={Boolean(session.discordUserId)}
+      canEditRoles={canEditRoles && roles.rolesAvailable}
       signOut={<SignOutButton redirectTo={localizedPath(locale)} label={dictionary.id.signOut} pendingLabel={dictionary.id.signOutPending} />}
     />
   );
