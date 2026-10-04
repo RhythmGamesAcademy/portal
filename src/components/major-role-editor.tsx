@@ -60,6 +60,9 @@ export function MajorRoleEditor({
   return (
     <div className="space-y-5">
       <form action={formAction} className="space-y-4 border-t border-line pt-5">
+        {selectedMajors.map((code) => (
+          <input key={code} type="hidden" name="majors" value={code} />
+        ))}
         <div className="space-y-2">
           <h3 className="text-base font-medium">{dictionary.roles.editHeading}</h3>
           <p className="text-sm text-muted">{dictionary.roles.editDescription}</p>
@@ -103,7 +106,6 @@ export function MajorRoleEditor({
                         <label key={code} className="flex min-h-10 cursor-pointer items-center gap-3 rounded-md px-2 py-1 hover:bg-notice">
                           <input
                             type="checkbox"
-                            name="majors"
                             value={code}
                             checked={checked}
                             disabled={!checked && selectedMajors.length >= 5}
