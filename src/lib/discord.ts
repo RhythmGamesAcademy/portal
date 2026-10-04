@@ -121,31 +121,41 @@ async function getAcademyMemberRolesWithBot(discordUserId: string, botToken: str
   }
 }
 
+async function setAcademyMemberRoleWithBot(
+  discordUserId: string,
+  roleId: string,
+  enabled: boolean,
+  botToken: string,
+): Promise<void> {
+  const endpoint = `${BOT_MEMBERS_ENDPOINT}/${encodeURIComponent(discordUserId)}/roles/${encodeURIComponent(roleId)}`;
+  const response = await fetch(endpoint, {
+    method: enabled ? "PUT" : "DELETE",
+    headers: { Authorization: `Bot ${botToken}` },
+    cache: "no-store",
+  });
+  if (!response.ok) throw new DiscordApiError(errorKind(response.status), response.status);
+}
+
 export async function getAcademyRoleIdsWithBot(discordUserId: string): Promise<string[]> {
   return getAcademyMemberRolesWithBot(discordUserId, requireEnv("DISCORD_BOT_TOKEN"));
 }
 
-/** Bot権限で本人の専攻ロールだけを置き換え、他のロールは維持する。 */
+/** 専攻ロール単位で追加・削除し、他のロールを上書きしない。 */
 export async function updateAcademyMajorRoles(discordUserId: string, majorRoleIds: string[]): Promise<void> {
   const botToken = requireEnv("DISCORD_BOT_TOKEN");
-  const endpoint = `${BOT_MEMBERS_ENDPOINT}/${encodeURIComponent(discordUserId)}`;
-  const headers = {
-    Authorization: `Bot ${botToken}`,
-    "Content-Type": "application/json",
-  };
-
   const currentRoles = await getAcademyMemberRolesWithBot(discordUserId, botToken);
   if (!majorRoleIds.every((roleId) => MAJOR_ROLE_IDS.has(roleId))) {
     throw new Error("変更対象に専攻ロール以外が含まれています。");
   }
-  const roles = currentRoles.filter((roleId) => !MAJOR_ROLE_IDS.has(roleId));
-  roles.push(...majorRoleIds);
+  const currentMajors = new Set(currentRoles.filter((roleId) => MAJOR_ROLE_IDS.has(roleId)));
+  const desiredMajors = new Set(majorRoleIds);
+  const rolesToRemove = [...currentMajors].filter((roleId) => !desiredMajors.has(roleId));
+  const rolesToAdd = [...desiredMajors].filter((roleId) => !currentMajors.has(roleId));
 
-  const updateResponse = await fetch(endpoint, {
-    method: "PATCH",
-    headers,
-    body: JSON.stringify({ roles }),
-    cache: "no-store",
-  });
-  if (!updateResponse.ok) throw new DiscordApiError(errorKind(updateResponse.status), updateResponse.status);
+  for (const roleId of rolesToRemove) {
+    await setAcademyMemberRoleWithBot(discordUserId, roleId, false, botToken);
+  }
+  for (const roleId of rolesToAdd) {
+    await setAcademyMemberRoleWithBot(discordUserId, roleId, true, botToken);
+  }
 }
