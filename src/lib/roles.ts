@@ -17,8 +17,8 @@ export interface PortalRoleSnapshot {
 // ロールIDを正本とし、表示名や分類をIDから解決する。名前だけで権限を判定しない。
 export const ROLE_CATALOG: Record<string, RoleDefinition> = {
   ["1518532514518532206"]: { code: "academy", kind: "other", nameJa: "音楽ゲーム学園", nameEn: "Rhythm Games Academy" },
-  ["1518532514518532205"]: { code: "dean", kind: "other", nameJa: "学園長", nameEn: "Dean" },
-  ["1518532514518532203"]: { code: "academic-director", kind: "other", nameJa: "教務主事", nameEn: "Academic Director" },
+  ["1518532514518532205"]: { code: "dean", kind: "academy", nameJa: "学園長", nameEn: "Dean" },
+  ["1518532514518532203"]: { code: "academic-director", kind: "academy", nameJa: "教務主事", nameEn: "Academic Director" },
   ["1518533017432359016"]: { code: "special-director", kind: "other", nameJa: "特任主事", nameEn: "Special Director" },
   ["1540358398669750303"]: { code: "suspended-instructor", kind: "state", nameJa: "活動停止（講師）", nameEn: "Suspended (Instructor)" },
   ["1535497157648326727"]: { code: "suspended-student", kind: "state", nameJa: "活動停止（学生）", nameEn: "Suspended (Student)" },

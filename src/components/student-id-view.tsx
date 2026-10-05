@@ -99,6 +99,7 @@ export function StudentIdView({
             </div>
             {canEditRoles ? (
               <MajorRoleEditor
+                key={roles.majors.join(",")}
                 locale={locale}
                 dictionary={dictionary}
                 initialMajors={roles.majors}

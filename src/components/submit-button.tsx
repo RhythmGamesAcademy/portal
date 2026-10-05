@@ -5,15 +5,18 @@ import { useFormStatus } from "react-dom";
 export function SubmitButton({
   children,
   pendingLabel,
+  pending: pendingProp,
   primary = false,
   className = "",
 }: {
   children: React.ReactNode;
   pendingLabel: string;
+  pending?: boolean;
   primary?: boolean;
   className?: string;
 }) {
-  const { pending } = useFormStatus();
+  const { pending: formPending } = useFormStatus();
+  const pending = pendingProp ?? formPending;
 
   return (
     <>

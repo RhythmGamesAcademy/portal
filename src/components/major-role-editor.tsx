@@ -134,7 +134,7 @@ export function MajorRoleEditor({
             {statusMessage}
           </p>
         )}
-        <SubmitButton primary pendingLabel={dictionary.roles.savePending}>
+        <SubmitButton primary pending={pending} pendingLabel={dictionary.roles.savePending}>
           {dictionary.roles.save}
         </SubmitButton>
       </form>
