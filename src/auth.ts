@@ -31,7 +31,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   providers: [
     Discord({
       // メールアドレスは要求しない
-      authorization: { params: { scope: "identify guilds guilds.members.read" } },
+      authorization: { params: { scope: "identify guilds guilds.members.read role_connections.write" } },
     }),
   ],
   session: { strategy: "jwt" },
