@@ -196,7 +196,7 @@ export function MajorRoleEditor({
                       const checked = selectedMajors.includes(code);
                       const disabled = !checked && selectedMajors.length >= 5;
                       return (
-                        <label key={code} className={`flex min-h-10 items-center gap-3 rounded-md px-2 py-1 hover:bg-notice ${disabled ? "cursor-not-allowed" : "cursor-pointer"}`}>
+                        <label key={code} className={`flex min-h-10 items-center gap-3 rounded-md px-2 py-1 hover:bg-notice ${disabled || pending ? "cursor-not-allowed" : "cursor-pointer"}`}>
                           <input
                             type="checkbox"
                             value={code}
@@ -208,7 +208,7 @@ export function MajorRoleEditor({
                                 ? [...current, code]
                                 : current.filter((selected) => selected !== code));
                             }}
-                            className="size-4 shrink-0 accent-accent"
+                            className="size-4 shrink-0 accent-accent disabled:cursor-not-allowed"
                           />
                           <span className="text-sm">{label}</span>
                         </label>
