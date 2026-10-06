@@ -57,7 +57,7 @@ export const ja = {
     unavailable: "Discordのロールを取得できませんでした。",
     unavailableAction: "ロールを更新するには、ログアウトして再ログインしてください。",
     warningTitle: "専攻ロールを確認してください",
-    warningBody: "専攻ロールは5つまでです。下の一覧から5つ以内に選び直して保存してください。",
+    warningBody: "専攻ロールは5つまでです。現在選択されている専攻から不要なものを解除し、5つ以内にしてください。",
     editHeading: "専攻ロールを編集",
     editDescription: "選択した専攻ロールがDiscordに反映されます。最大5つまで選択できます。",
     dropdownLabel: "専攻を選択",

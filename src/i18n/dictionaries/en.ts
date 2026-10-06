@@ -57,7 +57,7 @@ export const en = {
     unavailable: "Discord roles could not be retrieved.",
     unavailableAction: "Sign out and sign in again to refresh your roles.",
     warningTitle: "Check your major roles",
-    warningBody: "You can have up to five major roles. Select up to five roles below and save.",
+    warningBody: "You can have up to five major roles. Deselect any unwanted roles from your current selection to reduce it to five or fewer.",
     editHeading: "Edit major roles",
     editDescription: "Your selected major roles will be updated in Discord. Select up to five.",
     dropdownLabel: "Choose majors",

@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useMemo, useState } from "react";
+import { useActionState, useEffect, useMemo, useRef, useState } from "react";
 import type { Dictionary } from "@/i18n/dictionaries/types";
 import type { Locale } from "@/i18n/config";
 import {
@@ -23,6 +23,8 @@ export function MajorRoleEditor({
   initialMajors: string[];
 }) {
   const [selectedMajors, setSelectedMajors] = useState(initialMajors);
+  const [showSelectionWarning, setShowSelectionWarning] = useState(initialMajors.length > 5);
+  const selectionWarningRef = useRef<HTMLDialogElement>(null);
   const [search, setSearch] = useState("");
   const [state, formAction, pending] = useActionState<MajorRoleUpdateState, FormData>(
     updateMajorRoles,
@@ -50,6 +52,7 @@ export function MajorRoleEditor({
     .filter((result): result is typeof result & { rank: number } => result.rank !== null)
     .sort((a, b) => a.rank - b.rank || a.index - b.index)
     .map(({ major }) => major);
+  const initiallySelectedMajors = availableMajors.filter(({ code }) => initialMajors.includes(code));
   const selectedLabels = selectedMajors
     .map((code) => roleLabel(code, locale))
     .filter((label): label is string => Boolean(label));
@@ -76,9 +79,79 @@ export function MajorRoleEditor({
                 ? dictionary.roles.saveFailure
                 : "";
 
+  useEffect(() => {
+    const dialog = selectionWarningRef.current;
+    if (showSelectionWarning && dialog && !dialog.open) dialog.showModal();
+  }, [showSelectionWarning]);
+
+  useEffect(() => {
+    if (state.status !== "success") return;
+    setShowSelectionWarning(false);
+    selectionWarningRef.current?.close();
+  }, [state.status]);
+
   return (
     <div className="space-y-5">
-      <form action={formAction} className="space-y-4 border-t border-line pt-5">
+      <dialog
+        ref={selectionWarningRef}
+        aria-labelledby="major-selection-warning-title"
+        aria-describedby="major-selection-warning-description"
+        onCancel={(event) => {
+          if (selectedMajors.length > 5) event.preventDefault();
+          else setShowSelectionWarning(false);
+        }}
+        className="fixed inset-0 m-auto max-h-[min(90dvh,40rem)] w-[min(32rem,calc(100%-2rem))] overflow-y-auto rounded-xl border border-line bg-surface p-0 text-ink shadow-2xl backdrop:bg-black/60"
+      >
+        <div className="space-y-5 p-5 sm:p-6">
+          <div className="space-y-2">
+            <h2 id="major-selection-warning-title" className="text-lg font-semibold">
+              {dictionary.roles.warningTitle}
+            </h2>
+            <p id="major-selection-warning-description" className="text-sm text-muted">
+              {dictionary.roles.warningBody}
+            </p>
+            <p aria-live="polite" className="text-sm font-medium">
+              {selectedMajors.length} {dictionary.roles.selectionCount}
+            </p>
+          </div>
+          <fieldset className="max-h-64 space-y-1 overflow-y-auto">
+            <legend className="sr-only">{dictionary.roles.majorHeading}</legend>
+            {initiallySelectedMajors.map(({ code, label }) => (
+              <label key={code} className="flex min-h-10 cursor-pointer items-center gap-3 rounded-md px-2 py-1 hover:bg-notice">
+                <input
+                  type="checkbox"
+                  value={code}
+                  checked={selectedMajors.includes(code)}
+                  onChange={(event) => {
+                    const isChecked = event.currentTarget.checked;
+                    setSelectedMajors((current) => isChecked
+                      ? current.includes(code) ? current : [...current, code]
+                      : current.filter((selected) => selected !== code));
+                  }}
+                  className="size-4 shrink-0 accent-accent"
+                />
+                <span className="text-sm">{label}</span>
+              </label>
+            ))}
+          </fieldset>
+          {statusMessage && (
+            <p role="status" className={state.status === "success" ? "text-success" : "text-warning"}>
+              {statusMessage}
+            </p>
+          )}
+          <SubmitButton
+            form="major-role-form"
+            primary
+            className="w-full"
+            disabled={selectedMajors.length > 5}
+            pending={pending}
+            pendingLabel={dictionary.roles.savePending}
+          >
+            {dictionary.roles.save}
+          </SubmitButton>
+        </div>
+      </dialog>
+      <form id="major-role-form" action={formAction} className="space-y-4 border-t border-line pt-5">
         {selectedMajors.map((code) => (
           <input key={code} type="hidden" name="majors" value={code} />
         ))}
@@ -154,7 +227,12 @@ export function MajorRoleEditor({
             {statusMessage}
           </p>
         )}
-        <SubmitButton primary pending={pending} pendingLabel={dictionary.roles.savePending}>
+        <SubmitButton
+          primary
+          disabled={selectedMajors.length > 5}
+          pending={pending}
+          pendingLabel={dictionary.roles.savePending}
+        >
           {dictionary.roles.save}
         </SubmitButton>
       </form>
