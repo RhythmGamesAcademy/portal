@@ -113,7 +113,10 @@ export const ROLE_CATALOG: Record<string, RoleDefinition> = {
 
 const ROLE_BY_CODE = Object.fromEntries(Object.values(ROLE_CATALOG).map((role) => [role.code, role]));
 
-export function rolesFromDiscordIds(roleIds: string[]): PortalRoleSnapshot {
+export function rolesFromDiscordIds(
+  roleIds: string[],
+  rolePositions?: Record<string, number>,
+): PortalRoleSnapshot {
   const academyRoles: string[] = [];
   const majorCodes: string[] = [];
   for (const roleId of roleIds) {
@@ -121,6 +124,13 @@ export function rolesFromDiscordIds(roleIds: string[]): PortalRoleSnapshot {
     if (!role) continue;
     if (role.kind === "academy" && !academyRoles.includes(role.code)) academyRoles.push(role.code);
     if (role.kind === "major" && !majorCodes.includes(role.code)) majorCodes.push(role.code);
+  }
+  if (rolePositions) {
+    const roleIdByCode = new Map(Object.entries(ROLE_CATALOG).map(([roleId, role]) => [role.code, roleId]));
+    academyRoles.sort((a, b) =>
+      (rolePositions[roleIdByCode.get(b) ?? ""] ?? 0)
+      - (rolePositions[roleIdByCode.get(a) ?? ""] ?? 0),
+    );
   }
   return { academyRoles, majors: majorCodes, majorCount: majorCodes.length, rolesAvailable: true };
 }

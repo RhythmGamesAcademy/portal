@@ -102,13 +102,14 @@ export function MajorRoleEditor({
                   <div className="space-y-1">
                     {filteredMajors.map(({ code, label }) => {
                       const checked = selectedMajors.includes(code);
+                      const disabled = !checked && selectedMajors.length >= 5;
                       return (
-                        <label key={code} className="flex min-h-10 cursor-pointer items-center gap-3 rounded-md px-2 py-1 hover:bg-notice">
+                        <label key={code} className={`flex min-h-10 items-center gap-3 rounded-md px-2 py-1 hover:bg-notice ${disabled ? "cursor-not-allowed" : "cursor-pointer"}`}>
                           <input
                             type="checkbox"
                             value={code}
                             checked={checked}
-                            disabled={!checked && selectedMajors.length >= 5}
+                            disabled={disabled}
                             onChange={(event) => {
                               const isChecked = event.currentTarget.checked;
                               setSelectedMajors((current) => isChecked

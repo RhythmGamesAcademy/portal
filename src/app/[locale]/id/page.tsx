@@ -5,7 +5,7 @@ import { StudentIdView } from "@/components/student-id-view";
 import { SignOutButton } from "@/components/sign-out-button";
 import { getDictionary } from "@/i18n";
 import { isLocale, localizedPath, type Locale } from "@/i18n/config";
-import { DiscordApiError, getAcademyRoleIdsWithBot } from "@/lib/discord";
+import { DiscordApiError, getAcademyRoleIdsWithBot, getAcademyRolePositionsWithBot } from "@/lib/discord";
 import { optionalEnv } from "@/lib/env";
 import { rolesFromDiscordIds, unavailableRoleSnapshot } from "@/lib/roles";
 import { findStudentByHash } from "@/services/students";
@@ -31,7 +31,11 @@ export default async function StudentIdPage({ params }: { params: Promise<{ loca
   const canEditRoles = Boolean(session.discordUserId && optionalEnv("DISCORD_BOT_TOKEN"));
   if (canEditRoles) {
     try {
-      roles = rolesFromDiscordIds(await getAcademyRoleIdsWithBot(session.discordUserId));
+      const [roleIds, rolePositions] = await Promise.all([
+        getAcademyRoleIdsWithBot(session.discordUserId),
+        getAcademyRolePositionsWithBot(),
+      ]);
+      roles = rolesFromDiscordIds(roleIds, rolePositions);
     } catch (error) {
       if (!(error instanceof DiscordApiError)) throw error;
       console.error("Failed to load Discord roles for the student ID page.", error);

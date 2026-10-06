@@ -7,6 +7,7 @@ export const ACADEMY_GUILD_ID = "1518532514489307218";
 const API_BASE = "https://discord.com/api/v10";
 const GUILDS_ENDPOINT = `${API_BASE}/users/@me/guilds?limit=200`;
 const MEMBER_ENDPOINT = `${API_BASE}/users/@me/guilds/${ACADEMY_GUILD_ID}/member`;
+const GUILD_ROLES_ENDPOINT = `${API_BASE}/guilds/${ACADEMY_GUILD_ID}/roles`;
 const BOT_MEMBERS_ENDPOINT = `${API_BASE}/guilds/${ACADEMY_GUILD_ID}/members`;
 const MAJOR_ROLE_IDS = new Set(
   Object.entries(ROLE_CATALOG)
@@ -41,6 +42,10 @@ export interface DiscordGuildSummary {
 
 export interface DiscordGuildMember {
   roles: string[];
+}
+
+export interface DiscordRolePositions {
+  [roleId: string]: number;
 }
 
 function errorKind(status: number): DiscordApiErrorKind {
@@ -138,6 +143,34 @@ async function setAcademyMemberRoleWithBot(
 
 export async function getAcademyRoleIdsWithBot(discordUserId: string): Promise<string[]> {
   return getAcademyMemberRolesWithBot(discordUserId, requireEnv("DISCORD_BOT_TOKEN"));
+}
+
+export async function getAcademyRolePositionsWithBot(): Promise<DiscordRolePositions> {
+  const response = await fetch(GUILD_ROLES_ENDPOINT, {
+    headers: { Authorization: `Bot ${requireEnv("DISCORD_BOT_TOKEN")}` },
+    cache: "no-store",
+  });
+  if (!response.ok) throw new DiscordApiError(errorKind(response.status), response.status);
+
+  try {
+    const roles = (await response.json()) as unknown;
+    if (
+      !Array.isArray(roles)
+      || !roles.every((role) =>
+        typeof role === "object"
+        && role !== null
+        && "id" in role
+        && typeof role.id === "string"
+        && "position" in role
+        && typeof role.position === "number")
+    ) {
+      throw new DiscordApiError("invalid_response", response.status);
+    }
+    return Object.fromEntries(roles.map((role) => [role.id, role.position]));
+  } catch (error) {
+    if (error instanceof DiscordApiError) throw error;
+    throw new DiscordApiError("invalid_response", response.status);
+  }
 }
 
 /** 専攻ロール単位で追加・削除し、他のロールを上書きしない。 */
