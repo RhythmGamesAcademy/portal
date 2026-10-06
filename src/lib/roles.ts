@@ -17,8 +17,8 @@ export interface PortalRoleSnapshot {
 // ロールIDを正本とし、表示名や分類をIDから解決する。名前だけで権限を判定しない。
 export const ROLE_CATALOG: Record<string, RoleDefinition> = {
   ["1518532514518532206"]: { code: "academy", kind: "other", nameJa: "音楽ゲーム学園", nameEn: "Rhythm Games Academy" },
-  ["1518532514518532205"]: { code: "dean", kind: "other", nameJa: "学園長", nameEn: "Dean" },
-  ["1518532514518532203"]: { code: "academic-director", kind: "other", nameJa: "教務主事", nameEn: "Academic Director" },
+  ["1518532514518532205"]: { code: "dean", kind: "academy", nameJa: "学園長", nameEn: "Dean" },
+  ["1518532514518532203"]: { code: "academic-director", kind: "academy", nameJa: "教務主事", nameEn: "Academic Director" },
   ["1518533017432359016"]: { code: "special-director", kind: "other", nameJa: "特任主事", nameEn: "Special Director" },
   ["1540358398669750303"]: { code: "suspended-instructor", kind: "state", nameJa: "活動停止（講師）", nameEn: "Suspended (Instructor)" },
   ["1535497157648326727"]: { code: "suspended-student", kind: "state", nameJa: "活動停止（学生）", nameEn: "Suspended (Student)" },
@@ -113,7 +113,117 @@ export const ROLE_CATALOG: Record<string, RoleDefinition> = {
 
 const ROLE_BY_CODE = Object.fromEntries(Object.values(ROLE_CATALOG).map((role) => [role.code, role]));
 
-export function rolesFromDiscordIds(roleIds: string[]): PortalRoleSnapshot {
+export const ROLE_SEARCH_ALIASES: Record<string, string[]> = {
+  "major-01": ["アドファイ", "あどふぁい", "A Dance of Fire and Ice"],
+  "major-02": ["アーケア"],
+  "major-03": ["アステリズム"],
+  "major-04": ["あんさんぶるスターズ", "あんスタ"],
+  "major-05": ["バンドリ", "ガルパ", "ガールズバンドパーティー"],
+  "major-06": ["ビートマニア", "弐寺", "ニデラ", "IIDX"],
+  "major-07": ["ビートセイバー"],
+  "major-08": ["ベリーメロディ"],
+  "major-09": ["チュウニズム", "チュニズム", "チュウニ"],
+  "major-10": ["サイタス"],
+  "major-11": ["ディーフォーディージェイ", "ディーフォーディー"],
+  "major-12": ["ディーディーアール", "ダンレボ"],
+  "major-13": ["ダンスラ", "ダンスラッシュ"],
+  "major-14": ["ディーモ"],
+  "major-15": ["ディージェイマックス", "DJMAX RESPECT"],
+  "major-16": ["ダイナミックス"],
+  "major-17": ["エリア"],
+  "major-18": ["イージーツー", "EZ2AC", "EZ2ON"],
+  "major-19": ["ギタドラ", "ギターフリークス", "ドラムマニア"],
+  "major-20": ["グルコス", "グルーヴコースター"],
+  "major-21": ["はっけんじょうのコンチェルト"],
+  "major-22": ["ヒプマイ", "ヒプノシスマイク"],
+  "major-23": ["ホロドリ", "ホロライブドリームス"],
+  "major-24": ["ルミナスコア"],
+  "major-25": ["アイマス", "アイドルマスター"],
+  "major-26": ["ユビート"],
+  "major-27": ["インファルサス"],
+  "major-28": ["カルパ"],
+  "major-29": ["かみつばきしきょうそうちゅう", "かみつばき"],
+  "major-30": ["コトノネドライブ"],
+  "major-31": ["ラノタ"],
+  "major-32": ["リミナリティ"],
+  "major-33": ["スクフェス", "スクフェス2", "ラブライブスクールアイドルフェスティバル"],
+  "major-34": ["マイマイ", "舞"],
+  "major-35": ["ミューズダッシュ"],
+  "major-36": ["ミュージンク", "ミュージック"],
+  "major-37": ["ミュージンクス"],
+  "major-38": ["ニエンタム", "オプゼロ"],
+  "major-39": ["ノイズ"],
+  "major-40": ["ノタノート"],
+  "major-41": ["ノスタルジア"],
+  "major-42": ["オウギヒメ"],
+  "major-43": ["オンゲキ"],
+  "major-44": ["オルズミック"],
+  "major-45": ["オーバーラピッド"],
+  "major-46": ["パラダイムリブート", "パラリブ"],
+  "major-47": ["フィグロス"],
+  "major-48": ["プラチナラボ"],
+  "major-49": ["ポップン", "ポップンミュージック"],
+  "major-50": ["ポラリコ", "ポラリス"],
+  "major-51": ["プロジェクトセカイ", "プロジェクトセカイカラフルステージ", "pjsk", "プロセカ"],
+  "major-52": ["プロジェクトディーヴァ", "初音ミクプロジェクトディーヴァ", "DIVA"],
+  "major-53": ["プロジェクトペントジェット"],
+  "major-54": ["ピーアイユー", "PIU"],
+  "major-55": ["レイヴォン"],
+  "major-56": ["レゾナーク"],
+  "major-57": ["ロテーノ"],
+  "major-58": ["リズライン"],
+  "major-59": ["シクスターゲート", "シクゲ"],
+  "major-60": ["シノスラ"],
+  "major-61": ["サウンドボルテックス", "ボルテ", "SDVX"],
+  "major-62": ["シンクロニカ", "シンクロ"],
+  "major-63": ["太鼓"],
+  "major-64": ["シアトリズム", "シアトリズムファイナルファンタジー", "TFF"],
+  "major-65": ["タクミキュービック", "タクミ"],
+  "major-66": ["ダンカグ", "東方ダンマクカグラ"],
+  "major-67": ["トーンスフィア", "トンスフィ"],
+  "major-68": ["トロンボーンチャンプ"],
+  "major-69": ["ビビッドステイシス", "ビビステ"],
+  "major-70": ["ヴォイズ", "ボイズ"],
+  "major-71": ["ユメステ", "夢のステラリウム"],
+  "major-72": ["ゆんゆん", "ゆんゆん電波シンドローム"],
+  "major-73": ["その他"],
+};
+
+export const ROLE_SEARCH_ABBREVIATIONS: Record<string, string[]> = {
+  "major-04": ["あんスタ"],
+  "major-05": ["ガルパ"],
+  "major-06": ["弐寺", "ニデラ", "IIDX"],
+  "major-09": ["チュウニ"],
+  "major-11": ["ディーフォーディー"],
+  "major-12": ["ダンレボ"],
+  "major-13": ["ダンスラ"],
+  "major-19": ["ギタドラ"],
+  "major-20": ["グルコス"],
+  "major-22": ["ヒプマイ"],
+  "major-23": ["ホロドリ"],
+  "major-25": ["アイマス"],
+  "major-33": ["スクフェス", "スクフェス2"],
+  "major-46": ["パラリブ"],
+  "major-49": ["ポップン"],
+  "major-50": ["ポラリコ"],
+  "major-51": ["pjsk", "プロセカ"],
+  "major-52": ["DIVA"],
+  "major-59": ["シクゲ"],
+  "major-60": ["シノスラ"],
+  "major-61": ["ボルテ", "SDVX"],
+  "major-62": ["シンクロ"],
+  "major-64": ["TFF"],
+  "major-66": ["ダンカグ"],
+  "major-67": ["トンスフィ"],
+  "major-69": ["ビビステ"],
+  "major-71": ["ユメステ"],
+  "major-72": ["ゆんゆん"],
+};
+
+export function rolesFromDiscordIds(
+  roleIds: string[],
+  rolePositions?: Record<string, number>,
+): PortalRoleSnapshot {
   const academyRoles: string[] = [];
   const majorCodes: string[] = [];
   for (const roleId of roleIds) {
@@ -122,7 +232,29 @@ export function rolesFromDiscordIds(roleIds: string[]): PortalRoleSnapshot {
     if (role.kind === "academy" && !academyRoles.includes(role.code)) academyRoles.push(role.code);
     if (role.kind === "major" && !majorCodes.includes(role.code)) majorCodes.push(role.code);
   }
-  return { academyRoles, majors: majorCodes.slice(0, 5), majorCount: majorCodes.length, rolesAvailable: true };
+  if (rolePositions) {
+    const roleIdByCode = new Map(Object.entries(ROLE_CATALOG).map(([roleId, role]) => [role.code, roleId]));
+    academyRoles.sort((a, b) =>
+      (rolePositions[roleIdByCode.get(b) ?? ""] ?? 0)
+      - (rolePositions[roleIdByCode.get(a) ?? ""] ?? 0),
+    );
+  }
+  return { academyRoles, majors: majorCodes, majorCount: majorCodes.length, rolesAvailable: true };
+}
+
+export function majorRoleIdsFromCodes(codes: string[]): string[] {
+  const roleIdsByCode = new Map(
+    Object.entries(ROLE_CATALOG)
+      .filter(([, role]) => role.kind === "major")
+      .map(([roleId, role]) => [role.code, roleId]),
+  );
+  return codes.map((code) => roleIdsByCode.get(code)).filter((roleId): roleId is string => Boolean(roleId));
+}
+
+export function majorRoleCodes(): string[] {
+  return Object.values(ROLE_CATALOG)
+    .filter((role) => role.kind === "major")
+    .map((role) => role.code);
 }
 
 export function unavailableRoleSnapshot(): PortalRoleSnapshot {
@@ -137,6 +269,6 @@ export function roleLabel(code: string, locale: "ja" | "en"): string | null {
 export function displayableRoleLabels(snapshot: PortalRoleSnapshot, locale: "ja" | "en") {
   return {
     academy: snapshot.academyRoles.map((code) => roleLabel(code, locale)).filter((label): label is string => Boolean(label)),
-    majors: snapshot.majors.map((code) => roleLabel(code, locale)).filter((label): label is string => Boolean(label)),
+    majors: snapshot.majors.slice(0, 5).map((code) => roleLabel(code, locale)).filter((label): label is string => Boolean(label)),
   };
 }

@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import Image from "next/image";
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getDictionary } from "@/i18n";
 import { isLocale, type Locale } from "@/i18n/config";
@@ -21,18 +20,15 @@ export default async function LocaleLayout({ children, params }: { children: Rea
 
   return (
     <>
-      <a href="#main-content" className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-3 focus:z-50 focus:rounded-lg focus:bg-accent focus:px-4 focus:py-3 focus:text-accent-ink">
-        {dictionary.header.skipToContent}
-      </a>
       <header className="border-b border-line bg-surface">
         <div className="portal-container flex min-h-16 flex-wrap items-center justify-between gap-x-6 gap-y-2 py-2">
-          <Link href={`/${locale}`} className="flex min-h-12 min-w-0 flex-1 flex-wrap items-center gap-3 rounded-lg transition-colors hover:text-accent">
+          <div className="flex min-h-12 min-w-0 flex-1 flex-wrap items-center gap-3">
             <Image src="/icon/rga-logo_w.svg" alt="" width={868} height={382} className="h-auto w-24 shrink-0 object-contain" priority />
             <span className="flex min-w-0 flex-col">
               <span className="text-base font-semibold">{dictionary.header.academyName}</span>
               <span className="text-sm text-muted">{dictionary.header.portalName}</span>
             </span>
-          </Link>
+          </div>
           <LanguageSwitcher locale={locale} label={dictionary.header.language} ja={dictionary.header.ja} en={dictionary.header.en} />
         </div>
       </header>

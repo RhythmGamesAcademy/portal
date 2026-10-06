@@ -4,6 +4,7 @@ import type { Locale } from "@/i18n/config";
 import type { Dictionary } from "@/i18n/dictionaries/types";
 import type { PortalRoleSnapshot } from "@/lib/roles";
 import { CopyButton } from "@/components/copy-button";
+import { MajorRoleEditor } from "@/components/major-role-editor";
 import { formatDate } from "@/lib/format";
 import { displayableRoleLabels } from "@/lib/roles";
 
@@ -20,12 +21,14 @@ export function StudentIdView({
   locale,
   dictionary,
   roles,
+  canEditRoles,
 }: {
   student: Pick<Student, "studentId" | "createdAt" | "status"> | null;
   signOut: ReactNode;
   locale: Locale;
   dictionary: Dictionary;
   roles: PortalRoleSnapshot;
+  canEditRoles: boolean;
 }) {
   if (!student) {
     return (
@@ -94,19 +97,15 @@ export function StudentIdView({
                 </ul>
               ) : <p className="text-sm text-muted">{dictionary.roles.none}</p>}
             </div>
-            <div className="space-y-2">
-              <h3 className="text-base font-medium">{dictionary.roles.majorHeading}</h3>
-              {roleLabels.majors.length > 0 ? (
-                <ul className="flex flex-wrap gap-2" aria-label={dictionary.roles.majorHeading}>
-                  {roleLabels.majors.map((label) => <li key={label} className="role-chip">{label}</li>)}
-                </ul>
-              ) : <p className="text-sm text-muted">{dictionary.roles.none}</p>}
-            </div>
-            {roles.majorCount > 5 && (
-              <aside className="notice-panel warning-panel" aria-labelledby="major-warning-heading">
-                <h3 id="major-warning-heading" className="font-semibold">{dictionary.roles.warningTitle}</h3>
-                <p className="mt-1 text-sm leading-7 text-muted">{dictionary.roles.warningBody(roles.majorCount)}</p>
-              </aside>
+            {canEditRoles ? (
+              <MajorRoleEditor
+                key={roles.majors.join(",")}
+                locale={locale}
+                dictionary={dictionary}
+                initialMajors={roles.majors}
+              />
+            ) : (
+              <p className="text-sm text-muted">{dictionary.roles.unavailableAction}</p>
             )}
           </div>
         )}

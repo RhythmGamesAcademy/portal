@@ -6,8 +6,10 @@ import { ensureStudent } from "@/services/students";
 
 declare module "next-auth" {
   interface Session {
-    /** HMAC-SHA256 ダイジェスト。生の Discord ID はセッションに載せない */
+    /** HMAC-SHA256 ダイジェスト。学籍レコードの引き当てに使う */
     discordHash: string;
+    /** 専攻ロールの更新先を特定するためのDiscord ID */
+    discordUserId: string;
     studentId: string;
     roles: PortalRoleSnapshot;
   }
@@ -16,6 +18,7 @@ declare module "next-auth" {
 declare module "@auth/core/jwt" {
   interface JWT {
     discordHash?: string;
+    discordUserId?: string;
     studentId?: string;
     academyRoles?: string[];
     majors?: string[];
@@ -65,8 +68,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     /**
      * 初回サインイン時にだけ生の Discord ID に触れる。
      * signIn で発行済みのため、ここでの ensureStudent は既存レコードの読み出しに落ちる。
-     * トークンに残すのはダイジェストと学籍番号だけで、
-     * 既定で sub に入る Discord ID とプロフィール情報は捨てる。
+     * Discord ID はロール更新時の対象特定に必要なため暗号化JWTとセッションに含める。
+     * プロフィール情報とOAuthトークンは保存しない。
      */
     async jwt({ token, account, profile }) {
       if (account) {
@@ -76,6 +79,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         const student = await ensureStudent(discordId);
 
         token.discordHash = student.discordHash;
+        token.discordUserId = discordId;
         token.studentId = student.studentId;
         token.sub = student.discordHash;
         try {
@@ -106,6 +110,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 
     async session({ session, token }) {
       session.discordHash = token.discordHash ?? "";
+      session.discordUserId = token.discordUserId ?? "";
       session.studentId = token.studentId ?? "";
       session.roles = {
         academyRoles: token.academyRoles ?? [],
