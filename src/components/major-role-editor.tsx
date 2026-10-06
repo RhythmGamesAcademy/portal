@@ -3,7 +3,13 @@
 import { useActionState, useMemo, useState } from "react";
 import type { Dictionary } from "@/i18n/dictionaries/types";
 import type { Locale } from "@/i18n/config";
-import { majorRoleCodes, roleLabel } from "@/lib/roles";
+import {
+  majorRoleCodes,
+  roleLabel,
+  ROLE_SEARCH_ABBREVIATIONS,
+  ROLE_SEARCH_ALIASES,
+} from "@/lib/roles";
+import { searchMatchRank } from "@/lib/search";
 import { updateMajorRoles, type MajorRoleUpdateState } from "@/app/[locale]/id/actions";
 import { SubmitButton } from "@/components/submit-button";
 
@@ -28,9 +34,22 @@ export function MajorRoleEditor({
       .filter((major): major is { code: string; label: string } => Boolean(major.label)),
     [locale],
   );
-  const filteredMajors = availableMajors.filter((major) =>
-    major.label.toLocaleLowerCase(locale).includes(search.trim().toLocaleLowerCase(locale)),
-  );
+  const filteredMajors = availableMajors
+    .map((major, index) => {
+      const abbreviations = ROLE_SEARCH_ABBREVIATIONS[major.code] ?? [];
+      const aliases = (ROLE_SEARCH_ALIASES[major.code] ?? [])
+        .filter((alias) => !abbreviations.includes(alias));
+      const rank = searchMatchRank(
+        search,
+        [roleLabel(major.code, "ja"), roleLabel(major.code, "en")].filter((label): label is string => Boolean(label)),
+        aliases,
+        abbreviations,
+      );
+      return { major, index, rank };
+    })
+    .filter((result): result is typeof result & { rank: number } => result.rank !== null)
+    .sort((a, b) => a.rank - b.rank || a.index - b.index)
+    .map(({ major }) => major);
   const selectedLabels = selectedMajors
     .map((code) => roleLabel(code, locale))
     .filter((label): label is string => Boolean(label));

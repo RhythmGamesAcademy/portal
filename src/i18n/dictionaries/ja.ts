@@ -61,7 +61,7 @@ export const ja = {
     editHeading: "専攻ロールを編集",
     editDescription: "選択した専攻ロールがDiscordに反映されます。最大5つまで選択できます。",
     dropdownLabel: "専攻を選択",
-    searchPlaceholder: "専攻を検索",
+    searchPlaceholder: "専攻を検索（日本語・ローマ字）",
     noResults: "該当する専攻はありません。",
     selectionCount: "/ 5 個選択中",
     save: "専攻ロールを保存",

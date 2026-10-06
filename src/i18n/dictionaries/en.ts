@@ -61,7 +61,7 @@ export const en = {
     editHeading: "Edit major roles",
     editDescription: "Your selected major roles will be updated in Discord. Select up to five.",
     dropdownLabel: "Choose majors",
-    searchPlaceholder: "Search majors",
+    searchPlaceholder: "Search majors (Japanese or romaji)",
     noResults: "No matching majors.",
     selectionCount: "/ 5 selected",
     save: "Save major roles",
