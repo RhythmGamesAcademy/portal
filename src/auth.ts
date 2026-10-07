@@ -30,6 +30,7 @@ declare module "@auth/core/jwt" {
 export const { handlers, auth, signIn, signOut } = NextAuth({
   providers: [
     Discord({
+      issuer: "https://discord.com",
       // メールアドレスは要求しない
       authorization: { params: { scope: "identify guilds guilds.members.read" } },
     }),
