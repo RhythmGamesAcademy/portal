@@ -9,8 +9,18 @@ export function LanguageSwitcher({ locale, label, ja, en }: { locale: Locale; la
   const target = switchLocalePath(targetLocale, pathname);
   const targetLabel = targetLocale === "ja" ? ja : en;
 
-  function rememberLocale() {
+  function rememberLocale(event: React.MouseEvent<HTMLAnchorElement>) {
     document.cookie = `${localeCookie}=${targetLocale}; Path=/; Max-Age=31536000; SameSite=Lax`;
+
+    if (/^\/(?:ja|en)\/error\/?$/.test(pathname)) {
+      const currentUrl = new URL(window.location.href);
+      const error = currentUrl.searchParams.get("error");
+      if (error) {
+        const targetUrl = new URL(target, window.location.origin);
+        targetUrl.searchParams.set("error", error);
+        event.currentTarget.href = targetUrl.toString();
+      }
+    }
   }
 
   return (
